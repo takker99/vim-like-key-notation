@@ -1,59 +1,49 @@
-Overview [![Build Status](https://travis-ci.org/lydell/vim-like-key-notation.svg?branch=master)](https://travis-ci.org/lydell/vim-like-key-notation)
-========
+This repo is forked from the lydell's original one and rewritten to work with Deno. The README is
+being updated to reflect the changes.
+
+---
+
+# Overview
 
 Parse and generate vim-like key notation for modern browsers, with support for
 different keyboard layouts especially in mind.
 
 A sneak peek:
 
-```js
-var notation = require("vim-like-key-notation")
+```ts
+import { stringify } from "https://raw.githubusercontent.com/takker99/vim-like-key-notation/master/mod.ts";
 
-document.addEventListener("keydown", function(event) {
+document.addEventListener("keydown", (event) => {
   // The usual way.
   if (
     event.key === "Escape" &&
     event.shiftKey && event.ctrlKey &&
     !event.altKey && !event.metaKey
   ) {
-    runCommand()
+    runCommand();
   }
 
   // With vim-like-key-notation.
-  if (notation.stringify(event) === "<c-s-escape>") {
-    runCommand()
+  if (stringify(event) === "<c-s-escape>") {
+    runCommand();
   }
-}, true)
+});
 ```
 
 vim-like-key-notation is used by [VimFx].
 
 [VimFx]: https://github.com/akhodakivskiy/VimFx
 
+# The notation
 
-Installation
-============
-
-`npm install vim-like-key-notation`
-
-```js
-var notation = require("vim-like-key-notation")
-```
-
-
-The notation
-============
-
-In short
---------
+## In short
 
 - Simple characters: `a`, `A`, `/`, `>`.
 - Others: `<Escape>`, `<Enter>`, `<ArrowLeft>`.
 - Modifiers: `<c-a>`, `<c-A>`, `<a-m-/>`, `<c-gt>`.
 - Sequences: `<c-w>a`, `<2j`, `<Esc>>`, `<lt>Esc>>`.
 
-In detail
----------
+## In detail
 
 The basic rule is that each character represents itself.
 
@@ -93,8 +83,8 @@ The names of non-printable keys are case-insensitive, so you can say
 `<backspace>`, `<SHIFT>` and `<arrowLEFT>` as well.
 
 There is a [list of the names for non-printable keys][keylist] available on
-[MDN]. Beyond those, there are a couple of aliases, mostly to support names
-used by vim. After all, this module is called vim-like-key-notation.
+[MDN]. Beyond those, there are a couple of aliases, mostly to support names used
+by vim. After all, this module is called vim-like-key-notation.
 
 Just like printable keys, you can type sequences of non-printable keys as well.
 `<Esc><Backspace>` means first hitting the “Esc” key and then the “Backspace”
@@ -114,10 +104,10 @@ This allows to write `<lt>bs>`, `<bs<gt>` or `<lt>bs<gt>` to escape the meaning
 of “Backslash”.
 
 While talking about notation that looks like non-printable keys, there is yet
-one: Space. It is denoted as `<Space>`, not ` `. That’s because ` ` isn’t
-very readable. It is the same way for tabs and newlines; they’re called `<Tab>`
-and `<Enter>`, respectively. (All three of those keys can actually be considered
-to be in a middle-ground between printable and non-printable keys.)
+one: Space. It is denoted as `<Space>`, not `. That’s because` isn’t very
+readable. It is the same way for tabs and newlines; they’re called `<Tab>` and
+`<Enter>`, respectively. (All three of those keys can actually be considered to
+be in a middle-ground between printable and non-printable keys.)
 
 Actually, you may put any printable character inside `<` and `>` (other than `<`
 and `>`). In other words `<a>`, `<A>`, `</>` and `<?>` are equivalent to `a`,
@@ -222,9 +212,7 @@ Nah. You just might to get used to it.
 [keylist]: https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent.key#Key_values
 [MDN]: https://developer.mozilla.org/
 
-
-Technical notes
-===============
+# Technical notes
 
 vim-like-key-notation requires that [`event.key`] and [`event.code`] are
 available on keyboard events. When this was written, only Firefox 38+ supports
@@ -310,9 +298,9 @@ it is assumed to always be off.
 
 (Edit: Two years later, it turns out that it actually _is_ possible to detect
 capslock, by using [`event.getModifierState`]. The correct shift state can then
-be detected using `var shift = event.shiftKey !==
-event.getModifierState("CapsLock")`, but I haven’t bothered updating
-vim-like-key-notation with this.)
+be detected using
+`var shift = event.shiftKey !== event.getModifierState("CapsLock")`, but I
+haven’t bothered updating vim-like-key-notation with this.)
 
 The numpad is an exception. `event.key` is used there even if the current layout
 is set to be ignored. That’s because it is not possible to correctly emulate it.
@@ -357,16 +345,13 @@ much as you need. If something isn’t provided in your translations table the
 regular method of using `event.key` or translating `event.code` into en-US
 QWERTY is used (depending on if the current layout is set to be ignored).
 
-[`event.key`]:  https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent.key
+[`event.key`]: https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent.key
 [`event.code`]: https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent.code
 [`event.getModifierState`]: https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/getModifierState
 
+# API
 
-API
-===
-
-`stringify(event, options)`
----------------------------
+## `stringify(event, options)`
 
 Takes a keyboard event `event`—that has the `key` and `code` properties—and
 returns the equivalent vim-like-key-notation, in a standardized way.
@@ -392,15 +377,15 @@ returns the equivalent vim-like-key-notation, in a standardized way.
   If enabled, ignores ctrl+alt for printable keys. `<a-c-$>` becomes `$` and
   `<a-c-A>` becomes `A`, while `<a-c-enter>` stays the same.
 
-  This option is suitable on Windows, which treats [AltGr as
-  ctrl+alt][wikipedia-altgr]. For example, if a user of the sv-SE layout on
-  Windows holds AltGr and presses the key labeled `4`, in order to produce a
-  `$`, the result would be `<a-c-$>` without this option, making it impossible
-  to trigger a keyboard shortcut containing `$`. _With_ this option the result
-  is `$`, as expected (and as on GNU/Linux). On the other hand it won’t be
-  possible to trigger keyboard shortcuts such as `<a-c-a>`, but ctrl+alt
-  keyboard shortcuts are [discouraged on Windows][wikipedia-altgr] anyway
-  because of this reason.
+  This option is suitable on Windows, which treats
+  [AltGr as ctrl+alt][wikipedia-altgr]. For example, if a user of the sv-SE
+  layout on Windows holds AltGr and presses the key labeled `4`, in order to
+  produce a `$`, the result would be `<a-c-$>` without this option, making it
+  impossible to trigger a keyboard shortcut containing `$`. _With_ this option
+  the result is `$`, as expected (and as on GNU/Linux). On the other hand it
+  won’t be possible to trigger keyboard shortcuts such as `<a-c-a>`, but
+  ctrl+alt keyboard shortcuts are [discouraged on Windows][wikipedia-altgr]
+  anyway because of this reason.
 
 - `ignoreKeyboardLayout`: `Boolean`.
 
@@ -418,35 +403,37 @@ returns the equivalent vim-like-key-notation, in a standardized way.
   other value when shift _is_ held.
 
   ```js
-  stringify(event, {ignoreKeyboardLayout: true, translations: {
-    // AZERTY mappings.
-    "KeyQ": ["a", "A"],
-    "KeyA": ["q", "Q"],
-    // etc.
+  stringify(event, {
+    ignoreKeyboardLayout: true,
+    translations: {
+      // AZERTY mappings.
+      "KeyQ": ["a", "A"],
+      "KeyA": ["q", "Q"],
+      // etc.
 
-    // Swapped capslock and ctrl.
-    "CapsLock":    "Control",
-    "ControlLeft": "CapsLock",
+      // Swapped capslock and ctrl.
+      "CapsLock": "Control",
+      "ControlLeft": "CapsLock",
 
-    // Distinguish between regular numbers and numpad numbers by translating the
-    // numpad numbers into made-up names (regardless of numlock state).
-    "Numpad0": "K0",
-    "Numpad1": "K1",
-    "Numpad2": "K2",
-    "Numpad3": "K3",
-    "Numpad4": "K4",
-    "Numpad5": "K5",
-    "Numpad6": "K6",
-    "Numpad7": "K7",
-    "Numpad8": "K8",
-    "Numpad9": "K9"
-  }})
+      // Distinguish between regular numbers and numpad numbers by translating the
+      // numpad numbers into made-up names (regardless of numlock state).
+      "Numpad0": "K0",
+      "Numpad1": "K1",
+      "Numpad2": "K2",
+      "Numpad3": "K3",
+      "Numpad4": "K4",
+      "Numpad5": "K5",
+      "Numpad6": "K6",
+      "Numpad7": "K7",
+      "Numpad8": "K8",
+      "Numpad9": "K9",
+    },
+  });
   ```
 
 [wikipedia-altgr]: https://en.wikipedia.org/wiki/AltGr_key#Control_.2B_Alt_as_a_substitute
 
-`parse(keyString)`
-------------------
+## `parse(keyString)`
 
 The inverse of `stringify`. Takes a `keyString`, and returns an event-like
 object. Throws errors for invalid `keyString`s.
@@ -457,40 +444,35 @@ the input.
 The `altKey`, `ctrlKey`, `metaKey` and `shiftKey` properties will be set to
 `true` if the corresponding modifiers are present.
 
-
 ```js
-parse("a") // {key: "a"}
-parse("A") // {key: "A"}
+parse("a"); // {key: "a"}
+parse("A"); // {key: "A"}
 
-parse("<c-m-a>")    // {key: "a", ctrlKey: true, metaKey: true}
-parse("<s-escape>") // {key: "escape", shiftKey: true}
+parse("<c-m-a>"); // {key: "a", ctrlKey: true, metaKey: true}
+parse("<s-escape>"); // {key: "escape", shiftKey: true}
 ```
 
-`normalize(keyString)`
-----------------------
+## `normalize(keyString)`
 
 Simply a shortcut for `stringify(parse(keyString))`. Useful to compare different
 keyStrings: `normalize("<c-s-esc>") === normalize("<s-c-Escape>")`.
 
-`parseSequence(keySequence)`
-----------------------------
+## `parseSequence(keySequence)`
 
 Takes a `keySequence` and splits it into an array of individual keys. It does
 not validate each individual key; you may use `parse` or `normalize` for that.
 
 ```js
-parseSequence("<c-w>v")  // ["<c-w>", "v"]
-parseSequence("<c-w")    // ["<", "c", "-", "w"]
-parseSequence("<<c-w>>") // ["<", "<c-w>", ">"]
+parseSequence("<c-w>v"); // ["<c-w>", "v"]
+parseSequence("<c-w"); // ["<", "c", "-", "w"]
+parseSequence("<<c-w>>"); // ["<", "<c-w>", ">"]
 
 // Invalid keys.
-parseSequence("<x-a><s-a><ctrl-a> <++>") // ["<x-a>", "<s-a>", "<ctrl-a>", " ", "<++>"]
-parseSequence("<x-a><s-a><ctrl-a> <++>").map(parse) // Throws an error.
+parseSequence("<x-a><s-a><ctrl-a> <++>"); // ["<x-a>", "<s-a>", "<ctrl-a>", " ", "<++>"]
+parseSequence("<x-a><s-a><ctrl-a> <++>").map(parse); // Throws an error.
 ```
 
-
-Errors
-======
+# Errors
 
 All errors thrown by vim-like-key-notation have an `id` property, which is a
 string, and a `subject` key, which is what caused the error. Some errors have a
@@ -499,35 +481,30 @@ stated).
 
 These are the different ids:
 
-bad\_translation
-----------------
+## bad\_translation
 
 - thrown by: `stringify(event, options)`
 - context: a key in `options.translations` mapped to a bad value
 - subject: the bad value (which may be of any type)
 
-invalid\_key
-------------
+## invalid\_key
 
 - thrown by: `parse(keyString)` and `normalize(keyString)`
 - subject: the invalid `keyString`
 
-unknown\_modifier
------------------
+## unknown\_modifier
 
 - thrown by: `parse(keyString)` and `normalize(keyString)`
 - context: the `keyString` containing the invalid modifier
 - subject: an unknown modifier in `keyString`
 
-duplicate\_modifier
--------------------
+## duplicate\_modifier
 
 - thrown by: `parse(keyString)` and `normalize(keyString)`
 - context: the `keyString` containing the duplicate modifier
 - subject: a duplicate modifier in `keyString`
 
-disallowed\_modifier
---------------------
+## disallowed\_modifier
 
 - thrown by: `parse(keyString)` and `normalize(keyString)`
 - context: the `keyString` containing the disallowed modifier
@@ -536,8 +513,6 @@ disallowed\_modifier
 This error is thrown if you try to parse a key such as `<s-a>` (explained in
 detail the notation section).
 
-
-License
-=======
+# License
 
 [MIT](LICENSE).
