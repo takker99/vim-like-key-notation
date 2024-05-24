@@ -1,5 +1,5 @@
-This repo is forked from the lydell's original one and rewritten to work with Deno. The README is
-being updated to reflect the changes.
+This repo is forked from the lydell's original one and rewritten to work with
+Deno. The README is being updated to reflect the changes.
 
 ---
 
