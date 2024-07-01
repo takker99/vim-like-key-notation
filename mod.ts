@@ -124,7 +124,7 @@ const specialCases = {
 };
 
 const ignored =
-  /^($|Unidentified$|Dead$|Alt|Control|Hyper|Meta|Shift|Super|OS)/;
+  /^($|Unidentified$|Process$|Dead$|Alt|Control|Hyper|Meta|Shift|Super|OS)/;
 
 /**
  * Converts a Key event into a string representation.
