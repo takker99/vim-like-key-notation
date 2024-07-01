@@ -225,6 +225,7 @@ Deno.test("stringify()", async (t) => {
   await t.step("invalid keys", async (t) => {
     await t.step("unrecognized keys", () => {
       assertStrictEquals(stringify({ key: "Unidentified" }), "");
+      assertStrictEquals(stringify({ key: "Process" }), "");
       assertStrictEquals(stringify({ key: "Dead" }), "");
     });
 
