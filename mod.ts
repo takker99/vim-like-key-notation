@@ -1,3 +1,8 @@
+const has = <T extends object, K extends keyof T>(
+  obj: T,
+  key: string | number | symbol,
+): key is K => Object.hasOwn(obj, key);
+
 const aliases = {
   "left": "ArrowLeft",
   "right": "ArrowRight",
@@ -17,6 +22,11 @@ const aliases = {
   "lesser": "<",
   "gt": ">",
   "greater": ">",
+};
+
+const alias = (key: string) => {
+  const keyLower = key.toLowerCase();
+  return has(aliases, keyLower) ? aliases[keyLower] : key;
 };
 
 const enUsTranslations = {
@@ -43,67 +53,39 @@ const enUsTranslations = {
   "Slash": ["/", "?"],
 };
 
-const modifierMap = {
-  "a": "altKey",
-  "c": "ctrlKey",
-  "m": "metaKey",
-  "s": "shiftKey",
-} as const;
-
-const specialCases = {
-  "<": "lt",
-  ">": "gt",
-};
-
-const ignored =
-  /^($|Unidentified$|Dead$|Alt|Control|Hyper|Meta|Shift|Super|OS)/;
-
-const has = <T extends object, K extends keyof T>(
-  obj: T,
-  key: string | number | symbol,
-): key is K => Object.hasOwn(obj, key);
-
-const alias = (key: string) => {
-  const keyLower = key.toLowerCase();
-  if (has(aliases, keyLower)) {
-    return aliases[keyLower];
-  }
-  return key;
-};
-
 const codeToEnUsQwerty = (code: string, shift?: boolean) => {
   if (code.startsWith("Key")) {
     let key = code.slice(3);
-    if (!shift) {
-      key = key.toLowerCase();
-    }
+    if (!shift) key = key.toLowerCase();
     return key;
   }
 
-  if (has(enUsTranslations, code)) {
-    return enUsTranslations[code][shift ? 1 : 0];
-  }
-
-  return code;
+  return has(enUsTranslations, code)
+    ? enUsTranslations[code][shift ? 1 : 0]
+    : code;
 };
 
+/** Represents an error that occurs when an invalid key is encountered. */
 export interface InvalidKeyError {
   name: "InvalidKeyError";
   key: string;
   message: `Invalid key: ${string}`;
 }
+/** Represents an error that occurs when an unknown modifier is encountered. */
 export interface UnknownModifierError {
   name: "UnknownModifierError";
   modifier: string;
   context: string;
   message: `${string}: Unknown modifier: ${string}`;
 }
+/** Represents an error that occurs when a duplicate modifier is encountered. */
 export interface DuplicateModifierError {
   name: "DuplicateModifierError";
   modifier: string;
   context: string;
   message: `${string}: Duplicate modifier: ${string}`;
 }
+/** Represents an error that occurs when a disallowed modifier is used with single-character keys. */
 export interface DisallowedModifierError {
   name: "DisallowedModifierError";
   modifier: string;
@@ -113,15 +95,36 @@ export interface DisallowedModifierError {
 
 /**
  * Represents a key with optional modifiers.
+ *
+ * This is a superset of the Web API's [`KeyboardEvent`](https://developer.mozilla.org/docs/Web/API/KeyboardEvent).
  */
 export interface Key {
+  /** the same as [`KeyboardEvent.key`](https://developer.mozilla.org/docs/Web/API/KeyboardEvent/key) */
   key: string;
+
+  /**  the same as [`KeyboardEvent.code`](https://developer.mozilla.org/docs/Web/API/KeyboardEvent/code) */
   code?: string;
+
+  /**  the same as [`KeyboardEvent.shiftKey`](https://developer.mozilla.org/docs/Web/API/KeyboardEvent/shiftKey) */
   shiftKey?: boolean;
+
+  /**  the same as [`KeyboardEvent.ctrlKey`](https://developer.mozilla.org/docs/Web/API/KeyboardEvent/ctrlKey) */
   ctrlKey?: boolean;
+
+  /**  the same as [`KeyboardEvent.altKey`](https://developer.mozilla.org/docs/Web/API/KeyboardEvent/altKey) */
   altKey?: boolean;
+
+  /**  the same as [`KeyboardEvent.metaKey`](https://developer.mozilla.org/docs/Web/API/KeyboardEvent/metaKey) */
   metaKey?: boolean;
 }
+
+const specialCases = {
+  "<": "lt",
+  ">": "gt",
+};
+
+const ignored =
+  /^($|Unidentified$|Dead$|Alt|Control|Hyper|Meta|Shift|Super|OS)/;
 
 /**
  * Converts a Key event into a string representation.
@@ -138,14 +141,10 @@ export const stringify = (
     key = codeToEnUsQwerty(event.code || "", shift);
   } else {
     key = alias(key);
-    if (key === " ") {
-      key = "Space";
-    }
+    if (key === " ") key = "Space";
   }
 
-  if (ignored.test(key)) {
-    return "";
-  }
+  if (ignored.test(key)) return "";
 
   if (key.length === 1) {
     shift = false;
@@ -164,7 +163,17 @@ export const stringify = (
   return modifiers || key.length > 1 ? `<${modifiers}${key}>` : key;
 };
 
+/** Represents a result that can either be successful (`ok` is `true`) with a value of type `T`,
+ * or a failure (`ok` is `false`) with a value of type `E`.
+ */
 export type Result<T, E> = { ok: true; value: T } | { ok: false; value: E };
+
+const modifierMap = {
+  "a": "altKey",
+  "c": "ctrlKey",
+  "m": "metaKey",
+  "s": "shiftKey",
+} as const;
 
 /**
  * Parses a key string and returns a Result object containing the parsed key or an error.
